@@ -66,4 +66,6 @@ void nm_netns_controller_remove_netns (NMNetnsController *self, NMNetns *netns);
 
 NMNetnsController *nm_netns_controller_new (void);
 
+gboolean nm_netns_controller_setup (void);
+
 #endif  /* __NM_NETNS_CONTROLLER_H__ */

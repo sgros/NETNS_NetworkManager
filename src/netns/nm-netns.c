@@ -154,7 +154,7 @@ typedef struct {
 
 	bool bound:1;
 
-	NMPNetns *netns;
+	NMPNetns *nmp_netns;
 
 	/*
 	 * Platform interaction layer
@@ -246,12 +246,12 @@ nm_netns_push (NMNetns *self, NMPNetns **netnsp)
 	g_return_val_if_fail (NM_IS_NETNS (self), FALSE);
 
 	priv = NM_NETNS_GET_PRIVATE (self);
-	if (   !priv->netns
-	    || !nmp_netns_push (priv->netns)) {
+	if (   !priv->nmp_netns
+	    || !nmp_netns_push (priv->nmp_netns)) {
 		NM_SET_OUT (netnsp, NULL);
 		return FALSE;
 	}
-	NM_SET_OUT (netnsp, priv->netns);
+	NM_SET_OUT (netnsp, priv->nmp_netns);
 	return TRUE;
 }
 
@@ -383,7 +383,7 @@ _is_root (NMNetns *self)
 {
 	NMNetnsPrivate *priv = NM_NETNS_GET_PRIVATE (self);
 
-	return !priv->netns || priv->netns == nmp_netns_get_initial ();
+	return !priv->nmp_netns || priv->nmp_netns == nmp_netns_get_initial ();
 }
 
 /**************************************************************/
@@ -401,7 +401,7 @@ nm_netns_get_ns (NMNetns *self)
 {
 	g_return_val_if_fail (NM_IS_NETNS (self), NULL);
 
-	return NM_NETNS_GET_PRIVATE (self)->netns;
+	return NM_NETNS_GET_PRIVATE (self)->nmp_netns;
 }
 
 NMPlatform *
@@ -414,13 +414,13 @@ nm_netns_get_platform (NMNetns *self)
 	priv = NM_NETNS_GET_PRIVATE (self);
 
 	if (G_UNLIKELY (!priv->platform)) {
-		if (G_UNLIKELY (!priv->netns))
+		if (G_UNLIKELY (!priv->nmp_netns))
 			return NULL;
 
-		if (!nmp_netns_push (priv->netns))
+		if (!nmp_netns_push (priv->nmp_netns))
 			return NULL;
 		priv->platform = nm_linux_platform_new ();
-		nmp_netns_pop (priv->netns);
+		nmp_netns_pop (priv->nmp_netns);
 
 		g_signal_connect (priv->platform,
 		                  NM_PLATFORM_SIGNAL_LINK_CHANGED,
@@ -1023,10 +1023,13 @@ nm_netns_setup (NMNetns *self)
 	g_return_val_if_fail (priv->name && priv->name[0], FALSE);
 	g_return_val_if_fail (!priv->bound, FALSE);
 
-	if (!nmp_netns_bind_to_path (priv->netns, _bind_to_path (path_buf, priv->name), NULL))
+	if (!nmp_netns_bind_to_path (priv->nmp_netns, _bind_to_path (path_buf, priv->name), NULL))
 		return FALSE;
 
 	priv->bound = TRUE;
+
+	if (_is_root (self))
+		return TRUE;
 
 	/*
 	 * Enumerate all existing devices in the network namespace
@@ -1068,7 +1071,7 @@ nm_netns_stop(NMNetns *self)
 	if (priv->bound) {
 		char path_buf[256];
 
-		nmp_netns_bind_to_path_destroy (priv->netns, _bind_to_path (path_buf, priv->name));
+		nmp_netns_bind_to_path_destroy (priv->nmp_netns, _bind_to_path (path_buf, priv->name));
 		priv->bound = FALSE;
 	}
 
@@ -3208,6 +3211,9 @@ nm_netns_init (NMNetns *self)
 	g_signal_connect (priv->connectivity, "notify::" NM_CONNECTIVITY_STATE,
 	                  G_CALLBACK (connectivity_changed), self);
 #endif
+
+	/* Create new network namespace */
+	priv->nmp_netns = nmp_netns_new();
 
 	/* Load VPN plugins */
 	priv->vpn_manager = g_object_ref (nm_vpn_manager_get ());

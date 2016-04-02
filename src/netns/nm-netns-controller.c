@@ -294,6 +294,29 @@ impl_netns_controller_remove_namespace (NMNetnsController *self,
 
 /******************************************************************/
 
+/**
+ * nm_netns_controller_setup:
+ * @instance: the #NMNetnsController instance
+ *
+ * Failing to set up #NMNetnsController singleton results in a fatal
+ * error, as well as trying to initialize it multiple times without
+ * freeing it.
+ *
+ * NetworkManager will typically use only one network manager controller
+ * object during its run.
+ */
+gboolean
+nm_netns_controller_setup (void)
+{
+	NMNetnsController *self;
+
+	g_return_val_if_fail (!singleton_instance, FALSE);
+
+	self = nm_netns_controller_get ();
+
+	return create_new_namespace (singleton_instance, NETNS_ROOT_NAME) != NULL;
+}
+
 static void
 get_property (GObject *object, guint prop_id,
               GValue *value, GParamSpec *pspec)

@@ -49,7 +49,7 @@ typedef struct {
 } NMNetnsPrivate;
 
 NMPlatform *
-nm_netns_get_platform(NMNetns *self)
+nm_netns_get_platform (NMNetns *self)
 {
 	return nm_platform_get();
 }
@@ -71,7 +71,7 @@ nm_netns_stop (NMNetns *self)
 }
 
 NMNetns *
-nm_netns_new ()
+nm_netns_new (const char *name)
 {
 	return g_object_new (NM_TYPE_NETNS, NULL);
 }

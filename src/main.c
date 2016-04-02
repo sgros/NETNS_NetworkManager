@@ -446,6 +446,12 @@ main (int argc, char *argv[])
 	/* Set up platform interaction layer */
 	nm_linux_platform_setup ();
 
+	/* Set up network namespace controller */
+	if (!nm_netns_controller_setup ()) {
+		nm_log_err (LOGD_CORE, "failed to initialize network namespace controller");
+		goto done;
+	}
+
 	NM_UTILS_KEEP_ALIVE (config, NM_PLATFORM_GET, "NMConfig-depends-on-NMPlatform");
 
 	nm_dispatcher_init ();
