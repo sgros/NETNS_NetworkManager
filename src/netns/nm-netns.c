@@ -3212,8 +3212,8 @@ nm_netns_init (NMNetns *self)
 	                  G_CALLBACK (connectivity_changed), self);
 #endif
 
-	/* Create new network namespace */
-	priv->nmp_netns = nmp_netns_new();
+	/* Take network namespace to manage/use */
+	priv->nmp_netns = nmp_netns_get_current();
 
 	/* Load VPN plugins */
 	priv->vpn_manager = g_object_ref (nm_vpn_manager_get ());
