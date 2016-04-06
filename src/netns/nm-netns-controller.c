@@ -314,7 +314,7 @@ nm_netns_controller_setup (void)
 
 	self = nm_netns_controller_get ();
 
-	return create_new_namespace (singleton_instance, NETNS_ROOT_NAME) != NULL;
+	return TRUE;
 }
 
 static void
