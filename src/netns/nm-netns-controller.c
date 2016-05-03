@@ -164,6 +164,11 @@ create_new_namespace (NMNetnsController *self, const char *netnsname)
 		return NULL;
 	}
 
+	if (!nmp_netns_push (netnsp)) {
+		g_object_unref (netnsp);
+		return NULL;
+	}
+
 	netns = nm_netns_new (netnsname);
 
 	if (!nm_netns_setup (netns)) {
@@ -171,6 +176,8 @@ create_new_namespace (NMNetnsController *self, const char *netnsname)
 		g_object_unref (netns);
 		return NULL;
 	}
+
+	nmp_netns_pop (netnsp);
 
 	path = nm_exported_object_export (NM_EXPORTED_OBJECT (netns));
 	g_hash_table_insert (priv->network_namespaces, g_strdup (path), netns);

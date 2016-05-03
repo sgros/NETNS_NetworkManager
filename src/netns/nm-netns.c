@@ -1023,13 +1023,14 @@ nm_netns_setup (NMNetns *self)
 	g_return_val_if_fail (priv->name && priv->name[0], FALSE);
 	g_return_val_if_fail (!priv->bound, FALSE);
 
-	if (!nmp_netns_bind_to_path (priv->nmp_netns, _bind_to_path (path_buf, priv->name), NULL))
-		return FALSE;
-
 	priv->bound = TRUE;
 
-	if (_is_root (self))
+	if (_is_root (self)) {
+		if (!nmp_netns_bind_to_path (priv->nmp_netns, _bind_to_path (path_buf, priv->name), NULL))
+			return FALSE;
+
 		return TRUE;
+	}
 
 	/*
 	 * Enumerate all existing devices in the network namespace
@@ -1053,6 +1054,9 @@ nm_netns_setup (NMNetns *self)
 	g_signal_connect (priv->policy, "notify::" NM_POLICY_ACTIVATING_IP6_DEVICE,
 	                  G_CALLBACK (policy_activating_device_changed), self);
 #endif
+
+	if (!nmp_netns_bind_to_path (priv->nmp_netns, _bind_to_path (path_buf, priv->name), NULL))
+		return FALSE;
 
 	return TRUE;
 }
